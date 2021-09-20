@@ -226,7 +226,7 @@ module Isucondition
       halt_error 401, 'you are not signed in' unless jia_user_id
 
       response_list = db_transaction do
-        isu_list = db.xquery('SELECT ? FROM `isu` WHERE `jia_user_id` = ? ORDER BY `id` DESC', ISU_COLLUMN, jia_user_id)
+        isu_list = db.xquery("SELECT #{ISU_COLLUMN} FROM `isu` WHERE `jia_user_id` = ? ORDER BY `id` DESC", jia_user_id)
         isu_list.map do |isu|
           last_condition = db.xquery('SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY `timestamp` DESC LIMIT 1', isu.fetch(:jia_isu_uuid)).first
 
@@ -298,7 +298,7 @@ module Isucondition
         isu_from_jia = JSON.parse(res.body, symbolize_names: true)
 
         db.xquery('UPDATE `isu` SET `character` = ? WHERE  `jia_isu_uuid` = ?', isu_from_jia.fetch(:character), jia_isu_uuid)
-        db.xquery('SELECT ? FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?', ISU_COLLUMN, jia_user_id, jia_isu_uuid).first
+        db.xquery("SELECT #{ISU_COLLUMN} FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?", jia_user_id, jia_isu_uuid).first
       end
 
       status 201
@@ -318,7 +318,7 @@ module Isucondition
       halt_error 401, 'you are not signed in' unless jia_user_id
 
       jia_isu_uuid = params[:jia_isu_uuid]
-      isu = db.xquery('SELECT ? FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?',ISU_COLLUMN, jia_user_id, jia_isu_uuid).first
+      isu = db.xquery("SELECT #{ISU_COLLUMN} FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?", jia_user_id, jia_isu_uuid).first
       halt_error 404, 'not found: isu' unless isu
 
       content_type :json
@@ -582,7 +582,7 @@ module Isucondition
       character_list = db.query('SELECT `character` FROM `isu` GROUP BY `character`')
 
       res = character_list.map do |character|
-        isu_list = db.xquery('SELECT ? FROM `isu` WHERE `character` = ?', ISU_COLLUMN, character.fetch(:character))
+        isu_list = db.xquery("SELECT #{ISU_COLLUMN} FROM `isu` WHERE `character` = ?", character.fetch(:character))
         character_info_isu_conditions = []
         character_warning_isu_conditions = []
         character_critical_isu_conditions = []
