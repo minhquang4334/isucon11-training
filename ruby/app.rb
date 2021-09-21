@@ -522,7 +522,7 @@ module Isucondition
       start_time_str = params[:start_time]
       start_time = Time.at(start_time_str && !start_time_str.empty? ? Integer(start_time_str) : 0) rescue halt_error(400, 'bad format: start_time')
 
-      isu = db.xquery('SELECT name FROM `isu` WHERE `jia_isu_uuid` = ? AND `jia_user_id` = ?', jia_isu_uuid, jia_user_id).first
+      isu = db.xquery('SELECT name FROM `isu` WHERE `jia_isu_uuid` = ? AND `jia_user_id` = ? LIMIT 1', jia_isu_uuid, jia_user_id).first
       halt_error 404, 'not found: isu' unless isu
       isu_name = isu.fetch(:name)
 
@@ -543,16 +543,18 @@ module Isucondition
     def get_isu_conditions_from_db(jia_isu_uuid, end_time, condition_level, start_time, limit, isu_name)
       conditions = if start_time.to_i == 0
         db.xquery(
-          'SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? AND `timestamp` < ? ORDER BY `timestamp` DESC',
+          'SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? AND `timestamp` < ? ORDER BY `timestamp` DESC LIMIT ?',
           jia_isu_uuid,
           end_time,
+          limit
         )
       else
         db.xquery(
-          'SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? AND `timestamp` < ? AND ? <= `timestamp` ORDER BY `timestamp` DESC',
+          'SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? AND `timestamp` < ? AND ? <= `timestamp` ORDER BY `timestamp` DESC LIMIT ?',
           jia_isu_uuid,
           end_time,
           start_time,
+          limit
         )
       end
 
