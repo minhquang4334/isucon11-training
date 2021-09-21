@@ -579,18 +579,21 @@ module Isucondition
 
     # ISUの性格毎の最新のコンディション情報
     get '/api/trend' do
-      character_list = db.query('SELECT `character` FROM `isu` GROUP BY `character`')
+      character_list = db.query('SELECT `character`, `id`, `jia_isu_uuid` FROM `isu`')
+      isu_group_by_character = character_list.group_by { |c| c[:character] }
 
-      res = character_list.map do |character|
-        isu_list = db.xquery("SELECT #{ISU_COLLUMN} FROM `isu` WHERE `character` = ?", character.fetch(:character))
+      isu_conditions = db.xquery('SELECT isu_condition.* FROM `isu_condition` JOIN `latest_isu_condition` ON (isu_condition.jia_isu_uuid = latest_isu_condition.jia_isu_uuid) AND (isu_condition.timestamp = latest_isu_condition.timestamp)').map do |row|
+        [row.fetch(:jia_isu_uuid), row]
+      end.to_h
+
+      res = isu_group_by_character.map do |character, isu_list|
         character_info_isu_conditions = []
         character_warning_isu_conditions = []
         character_critical_isu_conditions = []
 
         isu_list.each do |isu|
-          conditions = db.xquery('SELECT isu_condition.* FROM `isu_condition` JOIN `latest_isu_condition` ON (isu_condition.jia_isu_uuid = latest_isu_condition.jia_isu_uuid) AND (isu_condition.timestamp = latest_isu_condition.timestamp) WHERE latest_isu_condition.jia_isu_uuid = ? LIMIT 1', isu.fetch(:jia_isu_uuid)).to_a
-          unless conditions.empty?
-            isu_last_condition = conditions.first
+          isu_last_condition = isu_conditions.fetch(isu[:jia_isu_uuid]) { nil }
+          unless isu_last_condition.nil?
             condition_level = calculate_condition_level(isu_last_condition.fetch(:condition))
             trend_condition = { isu_id: isu.fetch(:id), timestamp: isu_last_condition.fetch(:timestamp).to_i }
             case condition_level
@@ -609,7 +612,7 @@ module Isucondition
         character_critical_isu_conditions.sort! { |a,b| b.fetch(:timestamp) <=> a.fetch(:timestamp) }
 
         {
-          character: character.fetch(:character),
+          character: character,
           info: character_info_isu_conditions,
           warning: character_warning_isu_conditions,
           critical: character_critical_isu_conditions,
