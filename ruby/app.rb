@@ -238,11 +238,7 @@ module Isucondition
         end.to_h
 
         isu_list.map do |isu|
-          # last_condition = db.xquery('SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY `timestamp` DESC LIMIT 1', isu.fetch(:jia_isu_uuid)).first
-
-          # last_condition = db.xquery('SELECT isu_condition.* FROM `isu_condition` JOIN `latest_isu_condition` ON (isu_condition.jia_isu_uuid = latest_isu_condition.jia_isu_uuid) AND (isu_condition.timestamp = latest_isu_condition.timestamp) WHERE latest_isu_condition.jia_isu_uuid = ? LIMIT 1', isu.fetch(:jia_isu_uuid)).first
-
-          last_condition = last_conditions.fetch(isu.fetch(:jia_isu_uuid))
+          last_condition = last_conditions.fetch(isu.fetch(:jia_isu_uuid), nil)
 
           formatted_condition = last_condition ? {
             jia_isu_uuid: last_condition.fetch(:jia_isu_uuid),
