@@ -25,6 +25,7 @@ CREATE TABLE `isu_condition` (
   `condition` VARCHAR(255) NOT NULL,
   `message` VARCHAR(255) NOT NULL,
   `created_at` DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+--  `level` VARCHAR(30) DEFAULT '-1',
   PRIMARY KEY(`jia_isu_uuid`, `timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
 

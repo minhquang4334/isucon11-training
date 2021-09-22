@@ -178,6 +178,11 @@ module Isucondition
         'jia_service_url',
         jia_service_url,
       )
+      db.xquery('ALTER TABLE isu_condition ADD level varchar(30)')
+      isu_conditions = db.xquery('SELECT * FROM isu_condition').to_a
+      isu_conditions.each do |condition|
+        db.xquery('UPDATE isu_condition SET level = ? WHERE jia_isu_uuid = ? AND timestamp = ?', calculate_condition_level(condition.fetch(:condition)), condition.fetch(:jia_isu_uuid), condition.fetch(:timestamp))
+      end
 
       content_type :json
       { language: 'ruby' }.to_json
@@ -541,15 +546,16 @@ module Isucondition
 
     # ISUのコンディションをDBから取得
     def get_isu_conditions_from_db(jia_isu_uuid, end_time, condition_level, start_time, limit, isu_name)
+      condition_level = condition_level.map { |level| "'#{level}'" }
       conditions = if start_time.to_i == 0
         db.xquery(
-          "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? AND `timestamp` < ? ORDER BY `timestamp` DESC LIMIT 20",
+          "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? AND `timestamp` < ? AND level IN (#{condition_level.join(',')}) ORDER BY `timestamp` DESC LIMIT 20",
           jia_isu_uuid,
           end_time
         )
       else
         db.xquery(
-          "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? AND `timestamp` < ? AND ? <= `timestamp` ORDER BY `timestamp` DESC LIMIT 20",
+          "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? AND `timestamp` < ? AND ? <= `timestamp` AND level IN (#{condition_level.join(',')}) ORDER BY `timestamp` DESC LIMIT 20",
           jia_isu_uuid,
           end_time,
           start_time
@@ -557,23 +563,17 @@ module Isucondition
       end
 
       conditions_response = conditions.map do |c|
-        c_level = calculate_condition_level(c.fetch(:condition))
-        if condition_level.include?(c_level)
-          {
-            jia_isu_uuid: c.fetch(:jia_isu_uuid),
-            isu_name: isu_name,
-            timestamp: c.fetch(:timestamp).to_i,
-            is_sitting: c.fetch(:is_sitting),
-            condition: c.fetch(:condition),
-            condition_level: c_level,
-            message: c.fetch(:message),
-          }
-        else
-          nil
-        end
+        {
+          jia_isu_uuid: c.fetch(:jia_isu_uuid),
+          isu_name: isu_name,
+          timestamp: c.fetch(:timestamp).to_i,
+          is_sitting: c.fetch(:is_sitting),
+          condition: c.fetch(:condition),
+          condition_level: c.fetch(:level),
+          message: c.fetch(:message),
+        }
       end.compact
 
-      conditions_response = conditions_response[0, limit] if conditions_response.size > limit
       conditions_response
     end
 
@@ -649,10 +649,10 @@ module Isucondition
       rows = []
       json_params.each do |cond|
         timestamp = Time.at(cond.fetch(:timestamp)).strftime("%Y-%m-%d %H:%M:%S")
-        rows << "('%s', '%s', %s, '%s', '%s')"  % [ jia_isu_uuid, timestamp, cond.fetch(:is_sitting), cond.fetch(:condition), cond.fetch(:message)]
+        rows << "('%s', '%s', %s, '%s', '%s', '%s')"  % [ jia_isu_uuid, timestamp, cond.fetch(:is_sitting), cond.fetch(:condition), cond.fetch(:message), calculate_condition_level(cond.fetch(:condition))]
       end
 
-      db.xquery("INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`) VALUES #{rows.join(',')}")
+      db.xquery("INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`, `level`) VALUES #{rows.join(',')}")
 
       status 202
       ''
