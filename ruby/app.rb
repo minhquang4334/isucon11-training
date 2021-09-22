@@ -302,7 +302,7 @@ module Isucondition
           http.request(req)
         end
         if res.code != '202'
-          request.env['rack.logger'].warn "JIAService returned error: status code #{res.code}, message #{res.body.inspect}"
+          # request.env['rack.logger'].warn "JIAService returned error: status code #{res.code}, message #{res.body.inspect}"
           halt_error res.code.to_i, 'JIAService returned error'
         end
         isu_from_jia = JSON.parse(res.body, symbolize_names: true)
@@ -633,7 +633,7 @@ module Isucondition
       # TODO: 一定割合リクエストを落としてしのぐようにしたが、本来は全量さばけるようにすべき
       drop_probability = 0
       if rand <= drop_probability
-        request.env['rack.logger'].warn 'drop post isu condition request'
+        # request.env['rack.logger'].warn 'drop post isu condition request'
         halt_error 202, ''
       end
 
