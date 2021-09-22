@@ -101,7 +101,7 @@ module Isucondition
       def user_id_from_session
         jia_user_id = session[:jia_user_id]
         return nil if !jia_user_id || jia_user_id.empty?
-        count = db.xquery('SELECT COUNT(*) AS `cnt` FROM `user` WHERE `jia_user_id` = ?', jia_user_id).first
+        count = db.xquery('SELECT COUNT(*) AS `cnt` FROM `user` WHERE `jia_user_id` = ? LIMIT 1', jia_user_id).first
         return nil if count.fetch(:cnt).to_i.zero?
 
         jia_user_id
@@ -361,7 +361,7 @@ module Isucondition
 
 
       res = db_transaction do
-        cnt = db.xquery('SELECT COUNT(*) AS `cnt` FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?', jia_user_id, jia_isu_uuid).first
+        cnt = db.xquery('SELECT COUNT(*) AS `cnt` FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ? LIMIT 1', jia_user_id, jia_isu_uuid).first
         halt_error 404, 'not found: isu' if cnt.fetch(:cnt) == 0
 
         generate_isu_graph_response(jia_isu_uuid, date)
@@ -643,8 +643,8 @@ module Isucondition
       halt_error 400, 'bad request body' unless json_params.kind_of?(Array)
       halt_error 400, 'bad request body' if json_params.empty?
 
-      count = db.xquery('SELECT COUNT(*) AS `cnt` FROM `isu` WHERE `jia_isu_uuid` = ?', jia_isu_uuid).first
-      halt_error 404, 'not found: isu' if count.fetch(:cnt).zero?
+      isu = db.xquery("SELECT jia_isu_uuid FROM `isu` WHERE `jia_isu_uuid` = ?", jia_isu_uuid).first
+      halt_error 404, 'not found: isu' if isu.nil?
 
       rows = []
       json_params.each do |cond|
