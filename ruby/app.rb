@@ -41,7 +41,7 @@ module Isucondition
 
     class MySQLConnectionEnv
       def initialize
-        @host = get_env('MYSQL_HOST', '192.168.0.12')
+        @host = '192.168.0.12'
         @port = get_env('MYSQL_PORT', '3306')
         @user = get_env('MYSQL_USER', 'isucon')
         @db_name = get_env('MYSQL_DBNAME', 'isucondition')
