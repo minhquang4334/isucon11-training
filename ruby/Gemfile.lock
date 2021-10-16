@@ -1,6 +1,12 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    concurrent-ruby (1.1.9)
+    et-orbi (1.2.5)
+      tzinfo
+    fugit (1.5.2)
+      et-orbi (~> 1.1, >= 1.1.8)
+      raabro (~> 1.4)
     jwt (2.2.3)
     multi_json (1.15.0)
     mustermann (1.1.1)
@@ -11,10 +17,13 @@ GEM
     nio4r (2.5.8)
     puma (5.4.0)
       nio4r (~> 2.0)
+    raabro (1.4.0)
     rack (2.2.3)
     rack-protection (2.1.0)
       rack
     ruby2_keywords (0.0.5)
+    rufus-scheduler (3.8.0)
+      fugit (~> 1.1, >= 1.1.6)
     sinatra (2.1.0)
       mustermann (~> 1.0)
       rack (~> 2.2)
@@ -27,6 +36,8 @@ GEM
       sinatra (= 2.1.0)
       tilt (~> 2.0)
     tilt (2.0.10)
+    tzinfo (2.0.4)
+      concurrent-ruby (~> 1.0)
 
 PLATFORMS
   ruby
@@ -36,6 +47,7 @@ DEPENDENCIES
   mysql2
   mysql2-cs-bind
   puma
+  rufus-scheduler
   sinatra
   sinatra-contrib
 

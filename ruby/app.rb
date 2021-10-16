@@ -5,6 +5,7 @@ require 'sinatra/base'
 require 'uri'
 require 'mysql2'
 require 'mysql2-cs-bind'
+require 'rufus-scheduler'
 
 module Isucondition
   class App < Sinatra::Base
@@ -12,6 +13,7 @@ module Isucondition
       require 'sinatra/reloader'
       register Sinatra::Reloader
     end
+    @post_conditions = []
 
     SESSION_NAME = 'isucondition_ruby'
     CONDITION_LIMIT = 20
@@ -161,6 +163,20 @@ module Isucondition
 
         idx_cond_str == condition_str.size
       end
+
+      def schedule_post_condition
+        warn 'start scheduler'
+        scheduler = Rufus::Scheduler.new
+
+        scheduler.every '0.75s' do
+          warn 'run scheduler'
+          # Get data from cache
+          # insert
+          db.xquery("INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`, `level`) VALUES #{@post_conditions.join(',')}") unless @post_conditions.nil? || @post_conditions.empty?
+
+          @post_conditions = []
+        end
+      end
     end
 
     # サービスを初期化
@@ -183,6 +199,8 @@ module Isucondition
       isu_conditions.each do |condition|
         db.xquery('UPDATE isu_condition SET level = ? WHERE jia_isu_uuid = ? AND timestamp = ?', calculate_condition_level(condition.fetch(:condition)), condition.fetch(:jia_isu_uuid), condition.fetch(:timestamp))
       end
+      @post_conditions = []
+      schedule_post_condition
 
       content_type :json
       { language: 'ruby' }.to_json
@@ -648,7 +666,7 @@ module Isucondition
       halt_error 400, 'bad request body' unless json_params.kind_of?(Array)
       halt_error 400, 'bad request body' if json_params.empty?
 
-      isu = db.xquery("SELECT jia_isu_uuid FROM `isu` WHERE `jia_isu_uuid` = ?", jia_isu_uuid).first
+      isu = db.xquery("SELECT jia_isu_uuid FROM `isu` WHERE `jia_isu_uuid` = ? LIMIT 1", jia_isu_uuid).first
       halt_error 404, 'not found: isu' if isu.nil?
 
       rows = []
@@ -656,9 +674,9 @@ module Isucondition
         timestamp = Time.at(cond.fetch(:timestamp)).strftime("%Y-%m-%d %H:%M:%S")
         rows << "('%s', '%s', %s, '%s', '%s', '%s')"  % [ jia_isu_uuid, timestamp, cond.fetch(:is_sitting), cond.fetch(:condition), cond.fetch(:message), calculate_condition_level(cond.fetch(:condition))]
       end
+      @post_conditions.concat(rows) unless @post_conditions.nil?
 
-      db.xquery("INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`, `level`) VALUES #{rows.join(',')}")
-
+      # db.xquery("INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`, `level`) VALUES #{rows.join(',')}")
       status 202
       ''
     end
