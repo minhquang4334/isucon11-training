@@ -33,7 +33,7 @@ sub vcl_backend_response {
     #
     # Here you clean the response headers, removing silly Set-Cookie headers
     # and other mistakes your backend does.
-    set beresp.ttl = 0.8s;
+    set beresp.ttl = 0.5s;
     set beresp.grace = 0.2s;
 }
 

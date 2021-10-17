@@ -168,7 +168,7 @@ module Isucondition
         warn 'start scheduler'
         scheduler = Rufus::Scheduler.new
 
-        scheduler.every '1s' do
+        scheduler.every '0.3s' do
           warn 'run scheduler'
           # Get data from cache
           # insert
