@@ -651,7 +651,6 @@ module Isucondition
       # TODO: 一定割合リクエストを落としてしのぐようにしたが、本来は全量さばけるようにすべき
       drop_probability = 0
       if rand <= drop_probability
-        # request.env['rack.logger'].warn 'drop post isu condition request'
         halt_error 202, ''
       end
 
@@ -676,7 +675,6 @@ module Isucondition
       end
       @post_conditions.concat(rows) unless @post_conditions.nil?
 
-      # db.xquery("INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`, `level`) VALUES #{rows.join(',')}")
       status 202
       ''
     end
