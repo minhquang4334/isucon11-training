@@ -2,7 +2,7 @@
 Ruby言語でIsucon11の問題を全て解いてみるソースコードです。
 
 # 結果
-- 最終の点数は 24万点です。
+- 最終の点数は 27万点です。
   - 予選の11位相当
 - スコア履歴: https://github.com/minhquang4334/isucon11-training/issues/1
 
